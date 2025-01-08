@@ -37,7 +37,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+
+load_dotenv(dotenv_path="D:\AI\.env")
+
 # Set your OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
