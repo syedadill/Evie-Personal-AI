@@ -62,16 +62,15 @@ def query_openai_with_context(pdf_text, user_query):
     try:
         # Crafting the prompt to provide context and clear instructions
         prompt = (
-            "You are a personal assistant specialized in providing recommendations using PDF document data. Be a smart to understand the user using the PDF Data "
-            #"The following data was extracted from the document:\n\n"
-            f"{pdf_text[:3000]}... (truncated if too long)\n\n"
-            "Using this data, answer the user's query in detail, providing recommendations or insights as required. "
+            f"The following information is available for reference:\n\n{pdf_text[:3000]}...\n\n"
+            "Use this information and your general knowledge to provide a helpful, detailed answer to the user's question. "
+            "Do not mention the source or refer to where the information came from. "
             f"User query: {user_query}"
         )
         response = openai.ChatCompletion.create(
-            model="gpt-4o",  # Update to your desired model
+            model="gpt-4",  # Update to your desired model
             messages=[
-                {"role": "system", "content": "You are a personal assistant that assist and help user and uses document data to provide detailed and insightful recommendations."},
+                {"role": "system", "content": "You are a helpful assistant that provides direct and insightful responses without referencing the source of the information."},
                 {"role": "user", "content": prompt},
             ],
             max_tokens=500,
