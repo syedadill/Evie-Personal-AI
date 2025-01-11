@@ -23,10 +23,6 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         return self.request.user.profile
 
     
-
-
-# Set your OpenAI API key
-
 import openai
 import pdfplumber
 from rest_framework.views import APIView
@@ -36,12 +32,15 @@ from rest_framework import status
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import requests
+from datetime import datetime
 
+# Load environment variables
+load_dotenv(dotenv_path="D:/AI/.env")
 
-load_dotenv(dotenv_path="D:\AI\.env")
-
-# Set your OpenAI API key
+# Set your API keys
 openai.api_key = os.getenv("OPENAI_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
 # Path to the PDF file
 PDF_PATH = Path(__file__).resolve().parent / "data" / "sample.pdf"
@@ -57,7 +56,7 @@ def extract_pdf_data(file_path):
     except Exception as e:
         return f"Error extracting data: {str(e)}"
 
-# Function to query OpenAI with enhanced prompt engineering
+# Function to query OpenAI with context
 def query_openai_with_context(pdf_text, user_query):
     try:
         # Crafting the prompt to provide context and clear instructions
@@ -68,7 +67,7 @@ def query_openai_with_context(pdf_text, user_query):
             f"User query: {user_query}"
         )
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Update to your desired model
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that provides direct and insightful responses without referencing the source of the information."},
                 {"role": "user", "content": prompt},
@@ -77,7 +76,39 @@ def query_openai_with_context(pdf_text, user_query):
         )
         return response['choices'][0]['message']['content'].strip()
     except Exception as e:
-        return f"Error with OpenAI: {str(e)}"
+        return None  # Return None if OpenAI cannot provide an answer
+
+import requests
+
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+NEWS_API_URL = "https://newsapi.org/v2/everything"
+
+def fetch_news(query):
+    try:
+        # Simplify query for better matching
+        simplified_query = " ".join(query.split()[-2:]) if len(query.split()) > 2 else query
+
+        params = {
+            "q": simplified_query,  # Use simplified query
+            "apiKey": NEWS_API_KEY,
+            "sortBy": "publishedAt",
+            "language": "en",
+            "pageSize": 5  # Limit the number of articles
+        }
+        response = requests.get(NEWS_API_URL, params=params)
+        response_data = response.json()
+
+        if response.status_code == 200 and response_data.get("articles"):
+            news_items = response_data["articles"]
+            news_context = [
+                f"{item['title']} ({item['source']['name']}): {item['url']}"
+                for item in news_items
+            ]
+            return "\n".join(news_context)
+        else:
+            return "No recent news found for this query."
+    except Exception as e:
+        return f"Error fetching news: {str(e)}"
 
 # API Endpoint for Assistant
 class AssistantAPI(APIView):
@@ -101,5 +132,17 @@ class AssistantAPI(APIView):
         # Query OpenAI with PDF content and user question
         answer = query_openai_with_context(pdf_text, query)
 
-        # Structure the response
-        return Response({"answer": answer}, status=status.HTTP_200_OK)
+        # Check if OpenAI returned a useful answer
+        if answer and "I'm sorry" not in answer:
+            # If OpenAI provides a valid response, return it
+            return Response({"answer": answer}, status=status.HTTP_200_OK)
+        else:
+            # If OpenAI fails, fetch news updates
+            news_context = fetch_news(query)
+            return Response(
+                {
+                    "answer": "I couldn't find a direct answer. Here are some related news updates:",
+                    "news_context": news_context,
+                },
+                status=status.HTTP_200_OK,
+            )
