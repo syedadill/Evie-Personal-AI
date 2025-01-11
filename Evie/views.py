@@ -138,11 +138,11 @@ class AssistantAPI(APIView):
             return Response({"answer": answer}, status=status.HTTP_200_OK)
         else:
             # If OpenAI fails, fetch news updates
-            news_context = fetch_news(query)
+            answer = fetch_news(query)
             return Response(
                 {
                     "answer": "I couldn't find a direct answer. Here are some related news updates:",
-                    "news_context": news_context,
+                    "news_context": answer,
                 },
                 status=status.HTTP_200_OK,
             )
