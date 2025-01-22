@@ -109,14 +109,20 @@ WSGI_APPLICATION = 'AI.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'aiassistant_2gt9',  # Database name
-        'USER': 'adil',             # Username
-        'PASSWORD': 'W9QkVNiSkBMBf24bjPRApDqRZL1eciXA',  # Password
-        'HOST': 'dpg-ctds1b3v2p9s73c90oa0-a.oregon-postgres.render.com',  # External host
+        'NAME': 'evie_p4z3',  # Database name
+        'USER': 'evie_p4z3_user',             # Username
+        'PASSWORD': 'vMB3SAkqOfTlKPlKuJWQrxT8W1mRPmz6',  # Password
+        'HOST': 'dpg-cu89elan91rc738j8ad0-a.oregon-postgres.render.com',  # External host
         'PORT': '5432',  # Default PostgreSQL port
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

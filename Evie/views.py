@@ -22,127 +22,138 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.profile
 
-    
-import openai
-import pdfplumber
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from pathlib import Path
-import os
-from dotenv import load_dotenv
-import requests
-from datetime import datetime
+# import openai
+# import pdfplumber
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.permissions import IsAuthenticated
+# from rest_framework import status
+# from pathlib import Path
+# import os
+# from dotenv import load_dotenv
+# import requests
+# from googleapiclient.discovery import build
 
-# Load environment variables
-load_dotenv(dotenv_path="D:/AI/.env")
+# # Load environment variables
+# load_dotenv(dotenv_path="D:/AI/.env")
 
-# Set your API keys
-openai.api_key = os.getenv("OPENAI_API_KEY")
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+# # Set your API keys
+# openai.api_key = os.getenv("OPENAI_API_KEY")
+# NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# GOOGLE_SEARCH_ENGINE_ID = os.getenv("GOOGLE_SEARCH_ENGINE_ID")
 
-# Path to the PDF file
-PDF_PATH = Path(__file__).resolve().parent / "data" / "sample.pdf"
+# # Path to the PDF file
+# PDF_PATH = Path(__file__).resolve().parent / "data" / "sample.pdf"
 
-# Function to extract text from PDF
-def extract_pdf_data(file_path):
-    try:
-        with pdfplumber.open(file_path) as pdf:
-            text = ""
-            for page in pdf.pages:
-                text += page.extract_text()
-        return text
-    except Exception as e:
-        return f"Error extracting data: {str(e)}"
+# # Function to extract text from PDF
+# def extract_pdf_data(file_path):
+#     try:
+#         with pdfplumber.open(file_path) as pdf:
+#             text = ""
+#             for page in pdf.pages:
+#                 text += page.extract_text()
+#         return text
+#     except Exception as e:
+#         return f"Error extracting data: {str(e)}"
 
-# Function to query OpenAI with context
-def query_openai_with_context(pdf_text, user_query):
-    try:
-        # Crafting the prompt to provide context and clear instructions
-        prompt = (
-            f"The following information is available for reference:\n\n{pdf_text[:3000]}...\n\n"
-            "Use this information and your general knowledge to provide a helpful, detailed answer to the user's question. "
-            "Do not mention the source or refer to where the information came from. "
-            f"User query: {user_query}"
-        )
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that provides direct and insightful responses without referencing the source of the information."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=500,
-        )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        return None  # Return None if OpenAI cannot provide an answer
+# # Function to query OpenAI with context
+# def query_openai_with_context(pdf_text, user_query):
+#     try:
+#         # Crafting the prompt to provide context and clear instructions
+#         prompt = (
+#             f"The following information is available for reference:\n\n{pdf_text[:3000]}...\n\n"
+#             "Use this information and your general knowledge to provide a helpful, detailed answer to the user's question. "
+#             "Do not mention the source or refer to where the information came from. "
+#             f"User query: {user_query}"
+#         )
+#         response = openai.ChatCompletion.create(
+#             model="gpt-4",
+#             messages=[
+#                 {"role": "system", "content": "You are a helpful assistant that provides direct and insightful responses without referencing the source of the information."},
+#                 {"role": "user", "content": prompt},
+#             ],
+#             max_tokens=500,
+#         )
+#         return response['choices'][0]['message']['content'].strip()
+#     except Exception as e:
+#         return None  # Return None if OpenAI cannot provide an answer
 
-import requests
+# # Function to fetch news from NewsAPI
+# def fetch_news(query):
+#     try:
+#         simplified_query = " ".join(query.split()[-2:]) if len(query.split()) > 2 else query
 
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-NEWS_API_URL = "https://newsapi.org/v2/everything"
+#         params = {
+#             "q": simplified_query,
+#             "apiKey": NEWS_API_KEY,
+#             "sortBy": "publishedAt",
+#             "language": "en",
+#             "pageSize": 5
+#         }
+#         response = requests.get("https://newsapi.org/v2/everything", params=params)
+#         response_data = response.json()
 
-def fetch_news(query):
-    try:
-        # Simplify query for better matching
-        simplified_query = " ".join(query.split()[-2:]) if len(query.split()) > 2 else query
+#         if response.status_code == 200 and response_data.get("articles"):
+#             news_items = response_data["articles"]
+#             news_context = [
+#                 f"{item['title']} ({item['source']['name']}): {item['url']}"
+#                 for item in news_items
+#             ]
+#             return "\n".join(news_context)
+#         else:
+#             return "No recent news found for this query."
+#     except Exception as e:
+#         return f"Error fetching news: {str(e)}"
 
-        params = {
-            "q": simplified_query,  # Use simplified query
-            "apiKey": NEWS_API_KEY,
-            "sortBy": "publishedAt",
-            "language": "en",
-            "pageSize": 5  # Limit the number of articles
-        }
-        response = requests.get(NEWS_API_URL, params=params)
-        response_data = response.json()
+# # Function to perform Google Custom Search
+# def fetch_google_search_results(query):
+#     try:
+#         service = build("customsearch", "v1", developerKey=GOOGLE_API_KEY)
+#         res = service.cse().list(q=query, cx=GOOGLE_SEARCH_ENGINE_ID).execute()
 
-        if response.status_code == 200 and response_data.get("articles"):
-            news_items = response_data["articles"]
-            news_context = [
-                f"{item['title']} ({item['source']['name']}): {item['url']}"
-                for item in news_items
-            ]
-            return "\n".join(news_context)
-        else:
-            return "No recent news found for this query."
-    except Exception as e:
-        return f"Error fetching news: {str(e)}"
+#         if 'items' in res:
+#             search_results = []
+#             for item in res['items']:
+#                 search_results.append(f"{item['title']}: {item['link']}")
+#             return "\n".join(search_results)
+#         else:
+#             return "No relevant search results found on Google."
+#     except Exception as e:
+#         return f"Error fetching Google search results: {str(e)}"
 
-# API Endpoint for Assistant
-class AssistantAPI(APIView):
-    permission_classes = [IsAuthenticated]
+# # API Endpoint for Assistant
+# class AssistantAPI(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        # Ensure PDF file exists
-        if not PDF_PATH.exists():
-            return Response({"error": "PDF file not found"}, status=status.HTTP_404_NOT_FOUND)
+#     def post(self, request, *args, **kwargs):
+#         # Ensure PDF file exists
+#         if not PDF_PATH.exists():
+#             return Response({"error": "PDF file not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Extract text from the PDF
-        pdf_text = extract_pdf_data(PDF_PATH)
-        if "Error extracting data" in pdf_text:
-            return Response({"error": pdf_text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         # Extract text from the PDF
+#         pdf_text = extract_pdf_data(PDF_PATH)
+#         if "Error extracting data" in pdf_text:
+#             return Response({"error": pdf_text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Get the user query from request body
-        query = request.data.get("query", "").strip()
-        if not query:
-            return Response({"error": "Query parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+#         # Get the user query from request body
+#         query = request.data.get("query", "").strip()
+#         if not query:
+#             return Response({"error": "Query parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Query OpenAI with PDF content and user question
-        answer = query_openai_with_context(pdf_text, query)
+#         # Query OpenAI with PDF content and user question
+#         answer = query_openai_with_context(pdf_text, query)
 
-        # Check if OpenAI returned a useful answer
-        if answer and "I'm sorry" not in answer:
-            # If OpenAI provides a valid response, return it
-            return Response({"answer": answer}, status=status.HTTP_200_OK)
-        else:
-            # If OpenAI fails, fetch news updates
-            answer = fetch_news(query)
-            return Response(
-                {
-                    "answer": "I couldn't find a direct answer. Here are some related news updates:",
-                    "news_context": answer,
-                },
-                status=status.HTTP_200_OK,
-            )
+#         # Check if OpenAI returned a useful answer
+#         if answer and "I'm sorry" not in answer:
+#             return Response({"answer": answer}, status=status.HTTP_200_OK)
+#         else:
+#             # If OpenAI fails, fetch Google search results
+#             google_results = fetch_google_search_results(query)
+#             return Response(
+#                 {
+#                     "answer": "I couldn't find a direct answer. Here are some related Google search results:",
+#                     "google_results": google_results,
+#                 },
+#                 status=status.HTTP_200_OK,
+#             )
