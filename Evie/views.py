@@ -275,14 +275,14 @@ You are a highly intelligent personal assistant with advanced natural language p
 Respond to the user query by:
 1. Understanding the query intent.
 2. Combining all available data sources for the most accurate response. 
-3. Providing concise, actionable recommendations or information.
+3. Providing concise, actionable recommendations or information, provide the contact details or pricing if exist.
 4. Proactively suggesting helpful next steps based on the context.
 
 Now, generate the response:
 """
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a highly intelligent and capable assistant."},
                 {"role": "user", "content": prompt}
