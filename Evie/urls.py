@@ -1,7 +1,7 @@
 # urls.py
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import RegisterView, ProfileDetailView
+from .views import RegisterView, ProfileDetailView, AssistantAPI
 
 urlpatterns = [
     # JWT Token URLs
@@ -11,5 +11,5 @@ urlpatterns = [
     # User Registration and Profile URLs
     path('register/', RegisterView.as_view(), name='register'),
     path('profile/', ProfileDetailView.as_view(), name='profile'),
-    #path('chat/', AssistantAPI.as_view(), name='chat_api'),
+    path('chat/', AssistantAPI.as_view(), name='chat_api'),
 ]
