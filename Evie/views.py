@@ -292,7 +292,7 @@ Now, generate the response:
         return response['choices'][0]['message']['content'].strip()
     except Exception as e:
         return f"Error generating response: {str(e)}"
-
+from django.conf import settings
 class AssistantAPI(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
@@ -306,20 +306,53 @@ class AssistantAPI(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        pdf_path = "D:\\AI\\Evie\\data\\sample.pdf" # Make sure path is relevant to Django project
-        pdf_data = extract_pdf_data(pdf_path)
-
-        if "Error" in pdf_data:
-            return Response({"error": pdf_data}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        search_results = search_google(user_input)
-
-        if "Error" in search_results[0]:
-            return Response({"error": search_results[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        # Use Django's settings to get the correct file path
+        pdf_path = os.path.join(settings.BASE_DIR, 'Evie', 'data', 'sample.pdf')
         
-        summarized_response = generate_response(user_input, pdf_data, search_results, session_memory)
+        # Fallback mechanism
+        if not os.path.exists(pdf_path):
+            # Check if PDF is stored in media or static files
+            alternative_paths = [
+                os.path.join(settings.MEDIA_ROOT, 'sample.pdf'),
+                os.path.join(settings.STATIC_ROOT, 'sample.pdf')
+            ]
+            
+            for alt_path in alternative_paths:
+                if os.path.exists(alt_path):
+                    pdf_path = alt_path
+                    break
+            else:
+                return Response({
+                    "error": "PDF file not found",
+                    "paths_checked": [pdf_path] + alternative_paths
+                }, status=status.HTTP_404_NOT_FOUND)
         
-        session_memory.append({"query": user_input, "response": summarized_response})
-        save_session_memory(session_memory)
+        try:
+            pdf_data = extract_pdf_data(pdf_path)
 
-        return Response({"response": summarized_response}, status=status.HTTP_200_OK)
+            if "Error" in pdf_data:
+                return Response({
+                    "error": pdf_data,
+                    "file_path": pdf_path
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            search_results = search_google(user_input)
+
+        
+
+            if "Error" in search_results[0]:
+                return Response({"error": search_results[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            summarized_response = generate_response(user_input, pdf_data, search_results, session_memory)
+            
+            session_memory.append({"query": user_input, "response": summarized_response})
+            save_session_memory(session_memory)
+
+            return Response({"response": summarized_response}, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                "error": str(e),
+                "file_path": pdf_path
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
