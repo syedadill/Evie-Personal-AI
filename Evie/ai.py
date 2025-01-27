@@ -193,7 +193,7 @@ def load_session_memory():
 def save_session_memory(session_memory):
     try:
         with open(SESSION_MEMORY_FILE, "w") as file:
-            json.dump(session_memory, file, indent=4)
+            json.dump(session_memory, file, indent=10)
     except Exception as e:
         print(f"Error saving session memory: {e}")
 
@@ -231,52 +231,76 @@ def generate_response(query, pdf_data, search_results, session_memory):
     # Build a memory context string from the last few queries and responses
     memory_context = "\n".join(
         [f"User Query: {entry['query']}\nAssistant Response: {entry['response']}" for entry in session_memory[-4:]]
-    ) if len(session_memory) >= 4 else ""
+    ) if len(session_memory) >= 10 else ""
 
     # Build a detailed prompt for the assistant
     prompt = f"""
-You are a highly intelligent personal assistant with advanced natural language processing capabilities. Your goal is to provide precise, relevant, and actionable responses based on multiple sources of context.
+You are a highly intelligent,Personal assistant who use user data to help them decision making using his data and realtime google search data,  **Concise, actionable, and contextually relevant** responses. Your primary focus is on maintaining conversational continuity and ensuring clarity in every interaction.
 
-### Key Capabilities:
-1. Understand user queries by analyzing their intent and context.
-2. Leverage the provided PDF data for personal and relevant details.
-3. Use Google Search results to provide up-to-date information.
-4. Incorporate session memory to maintain continuity in the conversation.
 
-### Current Query:
-"{query}"
+###Context:
 
-### PDF Data (Personal Context):
-{pdf_data[:2000]}
+    ### Session Memory (Recent Conversations):
+    {session_memory}
+    ### Current Query:
+    "{query}"
 
-### Search Results (Real-Time Context):
-{search_results}
+    ### PDF Data (Personal Context):
+    {pdf_data[:3000]}
 
-### Session Memory (Recent Conversations):
-{memory_context}
+    ### Search Results (Real-Time Context):
+    {search_results}
+- **Session Memory**: The user's recent queries and your responses. Always get the context from here if you user doesn't specify the query.
+- **Search Results**: Real-time, up-to-date data to supplement context.
+- **PDF Data**: Personalized information relevant to the user's queries.
+    
 
-### Instructions:
-- Analyze the user query and extract the intent using the provided contexts.
-- Use PDF data for personalizing the response if relevant to the query.
-- Refer to Google Search results for supplementary information.
-- Leverage session memory to ensure continuity in the conversation.
-- If the query lacks clarity, check the last query in session memory , or ask the user follow-up questions to refine the response.
-- Provide a structured, actionable, and meaningful response to the user.
+### Core Principles:
+1. **Strict Context Reliance**: Every response must consider the user's previous query and your last response. Assume follow-up queries are related to the last conversation unless explicitly stated otherwise.
+2. **Focused and Relevant Responses**: If the query is ambiguous, prioritize the context of the last response. Provide specific answers that directly address the user's intent without drifting into unrelated suggestions.
+3. **Clarification When Necessary**: If the query cannot be linked to prior context or lacks clarity, politely ask targeted questions to refine your understanding before generating a response.
+4. Always provide the response only related to the last query if user does not specify any other thing
+
+### Behavior for Follow-Up Queries:
+1. Dont show the options or suggestions just provide the best option according with their relevant details.
+1. To specify the context or topic dont ask the user always get it from the last query or response in **Session Memory**.
+2. Always reference the most recent query and response in session memory.
+3. If the user does not specify a context, assume it is a continuation of the previous topic.
+4. Respond specifically to the topic of the previous conversation unless explicitly instructed otherwise.
+
+
+
+### Structure of Response:
+1. **Start with Contextual Acknowledgment**: Briefly connect the new response to the last query or response, ensuring continuity.
+2. **Provide Focused Information**: Answer only what the user is asking, staying on topic.
+3. **Avoid Generic Suggestions**: Do not introduce unrelated information unless the query explicitly asks for it.
+4. **Ask When Necessary**: If the query remains unclear after context analysis, request clarification politely and briefly.
+
+### Task Instructions:
+To specify the context or topic dont ask the user always get it from the last query or response in **Session Memory**.
+- Before generating a response, always review:
+  - The user's last query and your response in session memory.
+  - Any relevant data (PDF or search results) if applicable.
+- Use the last response as the **primary context** unless a clear shift in topic is indicated.
+- Generate a response that is concise, relevant, and actionable.
+- Provide relevant information (e.g., names, details, pricing, contact info).
+
 
 ### Task:
-Respond to the user query by:
-1. Understanding the query intent.
-2. Combining all available data sources for the most accurate response. 
-3. Providing concise, actionable recommendations or information.
-4. Proactively suggesting helpful next steps based on the context.
+1. Analyze the user's current query in the context of their last query and response.
+2. Generate a concise and contextually relevant response that directly addresses the user's query.
+3. If the query is ambiguous, infer intent from the last conversation or ask a brief follow-up question for clarification.
+4. Provide actionable, specific recommendations or information that aligns with the user's intent.
+5. Provide relevant information (e.g., names, details, pricing, contact info).
+6. To specify the context or topic dont ask the user always get it from the last query or response in **Session Memory**.
 
 Now, generate the response:
 """
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a highly intelligent and capable assistant."},
+                {"role": "system", "content": "You are a highly intelligent personal assistant who made to assist user in every decisions."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=800
@@ -322,6 +346,8 @@ def main():
 
         print("\nSmart Assistant Response:")
         print(summarized_response)
+        
+        
 
 # Run the bot
 if __name__ == "__main__":
