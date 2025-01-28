@@ -109,10 +109,10 @@ WSGI_APPLICATION = 'AI.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'evie_p4z3',  # Database name
-        'USER': 'evie_p4z3_user',             # Username
-        'PASSWORD': 'vMB3SAkqOfTlKPlKuJWQrxT8W1mRPmz6',  # Password
-        'HOST': 'dpg-cu89elan91rc738j8ad0-a.oregon-postgres.render.com',  # External host
+        'NAME': 'evie_5sic',  # Database name
+        'USER': 'evie_5sic_user',             # Username
+        'PASSWORD': '4h60tfpdGDCjVN7WHZX4KJQbW3Gtev7M',  # Password
+        'HOST': 'dpg-cuc79nbv2p9s73d2k760-a.oregon-postgres.render.com',  # External host
         'PORT': '5432',  # Default PostgreSQL port
     }
 }
