@@ -159,6 +159,11 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
 #             )
 
 
+
+
+
+
+
 import openai
 #import pdfplumber
 import PyPDF2
@@ -221,18 +226,36 @@ def extract_pdf_data(pdf_path):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
+# def search_google(query):
+#     try:
+#         url = "https://www.googleapis.com/customsearch/v1"
+#         params = {
+#             "q": query,
+#             "key": GOOGLE_API_KEY,
+#             "cx": SEARCH_ENGINE_ID,
+#             "num": 5,
+#         }
+#         response = requests.get(url, params=params)
+#         response.raise_for_status()
+#         search_results = response.json().get("items", [])
+#         return [result["snippet"] for result in search_results if "snippet" in result]
+#     except Exception as e:
+#         return [f"Error: {str(e)}"]
+
+SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
+
 def search_google(query):
     try:
-        url = "https://www.googleapis.com/customsearch/v1"
+        url = "https://serpapi.com/search"
         params = {
             "q": query,
-            "key": GOOGLE_API_KEY,
-            "cx": SEARCH_ENGINE_ID,
-            "num": 5,
+            "api_key": SERPAPI_API_KEY,
+            "engine": "google",
+            "num": 5  # Number of results
         }
         response = requests.get(url, params=params)
         response.raise_for_status()
-        search_results = response.json().get("items", [])
+        search_results = response.json().get("organic_results", [])
         return [result["snippet"] for result in search_results if "snippet" in result]
     except Exception as e:
         return [f"Error: {str(e)}"]
@@ -380,3 +403,4 @@ class AssistantAPI(APIView):
                 "error": str(e),
                 "file_path": pdf_path
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
