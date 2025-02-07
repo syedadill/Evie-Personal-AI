@@ -44,7 +44,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     class Meta:
         model = Profile
-        fields = ['first_name','profile_picture', 'bio', 'status']
+        fields = ["__all__"]
 
 class PDFUploadSerializer(serializers.ModelSerializer):
     query = serializers.CharField(write_only=True)
