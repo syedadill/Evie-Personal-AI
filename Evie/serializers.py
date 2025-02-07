@@ -41,10 +41,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     
 class ProfileSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    #first_name = serializers.CharField(source='user.first_name', read_only=True)
     class Meta:
         model = Profile
-        fields = ["__all__"]
+        fields = '__all__'
 
 class PDFUploadSerializer(serializers.ModelSerializer):
     query = serializers.CharField(write_only=True)
